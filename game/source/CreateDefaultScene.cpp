@@ -179,8 +179,6 @@ unique_ptr<Scene> CreateDefaultScene()
 {
     auto start = std::chrono::system_clock::now(); // 開始時刻を記録
 
-    std::thread createMapThread(createMap);
-
     // -- プレイヤー --
     auto playerObj = make_unique<GameObject>(L"プレイヤー",
         make_unique<GltfModel>(),
@@ -246,8 +244,7 @@ unique_ptr<Scene> CreateDefaultScene()
 
     // -- マップデータ --
     auto waitStart = std::chrono::system_clock::now(); // マップデータ読み込み待ち前の時間
-//    createMap();
-    createMapThread.join();
+    createMap();
 
     auto end = std::chrono::system_clock::now(); // 終了時刻を記録
 
