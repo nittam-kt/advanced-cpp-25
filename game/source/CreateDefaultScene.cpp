@@ -18,8 +18,16 @@
 #include "MapData.h"
 #include "LightController.h"
 
+#include <thread>
+
+
 using namespace std;
 using namespace UniDx;
+
+namespace
+{
+    unique_ptr<GameObject> mapObj;
+}
 
 // VertexPNTにウェイトWを追加した頂点情報
 struct VertexPNTW
@@ -49,7 +57,7 @@ const std::array< D3D11_INPUT_ELEMENT_DESC, 4> VertexPNTW::layout =
 };
 
 
-unique_ptr<GameObject> createMap(GameObject* player)
+void createMap()
 {
     // マップデータ作成
     MapData::create();
@@ -60,8 +68,8 @@ unique_ptr<GameObject> createMap(GameObject* player)
     auto floorMat = std::make_shared<Material>();
 
     // シェーダを指定してコンパイル
-    wallMat->shader.compile<VertexPNT>(L"Resource/PixelTest3.hlsl");
-    floorMat->shader.compile<VertexPNT>(L"Resource/PixelTest3.hlsl");
+    wallMat->shader.compile<VertexPNT>(L"Resource/AlbedoShadeSpec.hlsl");
+    floorMat->shader.compile<VertexPNT>(L"Resource/AlbedoShadeSpec.hlsl");
     floorMat->color = Color(0.85f, 0.8f, 0.85f);
 
     // 床テクスチャ作成
@@ -122,7 +130,7 @@ unique_ptr<GameObject> createMap(GameObject* player)
                 auto model = enemy->GetComponent<GltfModel>(true);
                 model->Load<VertexPNT>(
                     L"Resource/Pumpkin-carved-lit-a.glb",
-                    L"Resource/PixelTest3.hlsl",
+                    L"Resource/AlbedoShadeSpec.hlsl",
                     enemyTex);
 
                 enemy->transform->localPosition = Vector3(
@@ -163,12 +171,16 @@ unique_ptr<GameObject> createMap(GameObject* player)
         }
     }
 
-    return move(map);
+    mapObj = move(map);
 }
 
 
 unique_ptr<Scene> CreateDefaultScene()
 {
+    auto start = std::chrono::system_clock::now(); // 開始時刻を記録
+
+    std::thread createMapThread(createMap);
+
     // -- プレイヤー --
     auto playerObj = make_unique<GameObject>(L"プレイヤー",
         make_unique<GltfModel>(),
@@ -179,14 +191,14 @@ unique_ptr<Scene> CreateDefaultScene()
     auto model = playerObj->GetComponent<GltfModel>(true);
     model->Load<VertexPNT>(
         L"Resource/ModularCharacterPBR.glb",
-        L"Resource/PixelTest3.hlsl",
+        L"Resource/AlbedoShadeSpec.hlsl",
         L"Resource/Albedo.png");
     playerObj->transform->localPosition = Vector3(0, -1, 0);
     playerObj->transform->localRotation = Quaternion::CreateFromYawPitchRoll(XM_PI, 0, 0);
 
     // ボール
     auto ball = make_unique<GameObject>(L"ボール", Vector3(0, 2, 1),
-        SphereRenderer::create<VertexPNT>(L"Resource/PixelTest3.hlsl", L"Resource/wall-2.png"));
+        SphereRenderer::create<VertexPNT>(L"Resource/AlbedoShadeSpec.hlsl", L"Resource/wall-2.png"));
     ball->transform->localScale = Vector3(3, 3, 3);
 
     // -- カメラ --
@@ -232,17 +244,27 @@ unique_ptr<Scene> CreateDefaultScene()
     auto canvas = make_unique<Canvas>();
     canvas->LoadDefaultMaterial(L"Resource");
 
-
     // -- マップデータ --
-    auto map = createMap(playerObj.get());
+    auto waitStart = std::chrono::system_clock::now(); // マップデータ読み込み待ち前の時間
+//    createMap();
+    createMapThread.join();
 
+    auto end = std::chrono::system_clock::now(); // 終了時刻を記録
+
+    // 処理時間を計算（ミリ秒に変換）
+    std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::chrono::milliseconds waitMapTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - waitStart);
+
+    wostringstream ss;
+    ss << L"合計時間：" << elapsed.count() << L" createMap待ち時間:" << waitMapTime.count();
+    Debug::Log(ss.str());
 
     // シーンを作って戻す
     return make_unique<Scene>(
 
         make_unique<GameObject>(L"オブジェクトルート",
             move(playerObj),
-            move(map),
+            move(mapObj),
             move(ball)
         ),
 
@@ -258,4 +280,10 @@ unique_ptr<Scene> CreateDefaultScene()
             move(textObj)
         )
     );
+}
+
+
+void DestroyDefaultScene()
+{
+    mapObj.reset();
 }

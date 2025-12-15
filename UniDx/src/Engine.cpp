@@ -260,7 +260,10 @@ void Engine::render()
 // 終了処理
 void Engine::finalize()
 {
-
+    LightManager::destroy();
+    Physics::destroy();
+    SceneManager::destroy();
+    D3DManager::destroy();
 }
 
 

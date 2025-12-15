@@ -19,4 +19,10 @@ void SceneManager::createScene()
 //	defaultMaterial->shader.compile<VertexPN>(L"Resource/DefaultShade.hlsl");
 }
 
+// デストラクタ。シーンを破棄
+SceneManager::~SceneManager()
+{
+	DestroyDefaultScene();
+}
+
 }

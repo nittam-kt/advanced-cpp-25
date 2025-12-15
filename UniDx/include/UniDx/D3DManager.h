@@ -37,6 +37,9 @@ public:
 	const ComPtr<ID3D11Device>&			GetDevice() const { return m_device; }
 	const ComPtr<ID3D11DeviceContext>&	GetContext() const { return m_context; }
 
+	// デストラクタ
+	~D3DManager();
+
 	// バックバッファレンダーターゲットをクリア
 	void Clear(float r, float g, float b, float a);
 

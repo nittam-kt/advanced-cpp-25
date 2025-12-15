@@ -178,5 +178,13 @@ void D3DManager::Clear(float r, float g, float b, float a)
 	m_context->OMSetRenderTargets(1, m_renderTarget.GetAddressOf(), m_depthStencilView.Get());
 }
 
+D3DManager::~D3DManager()
+{
+	m_context->ClearState();
+	m_context->Flush();
+	m_context.Reset();
+	m_renderTarget.Reset();
+}
+
 
 } // UniDx

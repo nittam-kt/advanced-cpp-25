@@ -31,7 +31,7 @@ public:
     // インスタンスの破棄
 	static void destroy()
 	{
-		instance_ = nullptr;
+        instance_.reset();
 	}
 
 protected:

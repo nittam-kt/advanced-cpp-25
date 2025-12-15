@@ -8,6 +8,7 @@
 
 
 std::unique_ptr<UniDx::Scene> CreateDefaultScene();
+void DestroyDefaultScene();
 
 
 namespace UniDx
@@ -19,13 +20,14 @@ class Scene;
 class SceneManager : public Singleton<SceneManager>
 {
 public:
+    ~SceneManager();
+
     void createScene();
 
     Scene* GetActiveScene() { return activeScene.get(); }
 
 protected:
     std::unique_ptr<Scene> activeScene;
-//    std::unique_ptr<Material> defaultMaterial;
 };
 
 }
